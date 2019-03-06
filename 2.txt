@@ -1,0 +1,80 @@
+#define ch_a 2
+#define ch_b 3
+#define in1 5
+#define in2 6
+
+unsigned long time1;
+unsigned long time0;
+int counter = 0;
+float pos = 0;
+float e =0 ,Qd=0 ,P=0 ,D=0 ,I=0 ,u=0 ,epast=0;
+float kp =0, kd =0, ki =0;
+void setup() {
+  pinMode (ch_a , INPUT);
+  pinMode (ch_b , INPUT);
+  pinMode (in1 , OUTPUT);
+  pinMode (in2 , OUTPUT);
+  Serial.begin(115200);
+  Serial.setTimeout(10);
+  attachInterrupt(0, enc, CHANGE);
+
+}
+
+void enc() {
+  if(digitalRead (ch_a) == HIGH && digitalRead (ch_b) == LOW)
+  {
+    counter--;
+  }
+  else if(digitalRead (ch_a) == HIGH && digitalRead (ch_b) == HIGH){
+    counter++;
+  }
+
+}
+
+
+void loop() {
+
+  if(Serial.available())
+  {
+  Serial.println("Please insert Qd");
+  Qd = Serial.parseFloat();
+  Serial.println("Please insert kp");
+  kp = Serial.parseFloat();
+  Serial.println("Please insert kd");
+  kd = Serial.parseFloat();
+  Serial.println("Please insert ki");
+  ki = Serial.parseFloat();
+  time0 = millis();
+  }
+  pos = ((float(counter*360.)/512))*0.531;
+ // Serial.println(pos);
+  e = Qd - pos;
+  P = kp *e;
+  D = kd *(e-epast);
+  I = I + ki*e;
+  u = P + D + I;
+  epast =e;
+
+
+    if(u>0)
+    {
+      if(u > 255)  u = 255;
+     analogWrite(5,int(u));
+     analogWrite(6,0);
+    }
+
+
+ if(u<0){
+  if(u < -255) u = -255;
+     analogWrite(6,int(-u));
+     analogWrite(5,0);
+    }
+
+  time1 = millis()-time0;
+  Serial.print(time1); 
+Serial.print('\t');
+Serial.print(pos);
+Serial.print('\t');
+Serial.println(Qd);
+  }
+ 
